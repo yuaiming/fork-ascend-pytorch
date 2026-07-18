@@ -118,6 +118,23 @@ jobs:
 
           cat ${REPORT_MD} >> $GITHUB_STEP_SUMMARY
 
+      - name: Install openpyxl
+        run: |
+          pip${{ inputs.python_version }} install openpyxl
+
+      - name: Generate result Excel
+        run: |
+          TRACKER="ascend_pytorch/.github/scripts/Test Class Refactoring Tracker.xlsx"
+          if [ -f "${TRACKER}" ]; then
+            python ascend_pytorch/.github/scripts/excel_utils.py report \
+              --tracker "${TRACKER}" \
+              --output npu-test-result.xlsx \
+              --results-dir .
+          else
+            echo "WARNING: Tracker Excel not found: ${TRACKER}"
+            echo "Skipping result Excel generation."
+          fi
+
       - name: Upload consolidated summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -128,4 +145,5 @@ jobs:
             npu-full-test-summary.json
             distributed_cases_results_by_file.jsonl
             regular_cases_results_by_file.jsonl
+            npu-test-result.xlsx
           retention-days: 60

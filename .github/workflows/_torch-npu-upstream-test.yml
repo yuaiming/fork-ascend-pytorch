@@ -50,7 +50,7 @@ jobs:
   prepare:
     uses: ./.github/workflows/_torch-npu-upstream-prepare.yml
     with:
-      prepared_test_src_artifact: pytorch-test-src-${{ inputs.pytorch_version }}-patched
+      prepared_test_src_artifact: pytorch-test-src
 
   # ============================================================================
   # 2. Build torch_npu Wheel
@@ -75,7 +75,7 @@ jobs:
     uses: ./.github/workflows/_torch-npu-upstream-collect.yml
     with:
       python_version: ${{ inputs.python_version }}
-      prepared_test_src_artifact: pytorch-test-src-${{ inputs.pytorch_version }}-patched
+      prepared_test_src_artifact: pytorch-test-src
       torch_npu_wheel_artifact: torch-npu-wheel-${{ inputs.pytorch_version }}-source
       docker_image: ${{ inputs.docker_image_test }}
       distributed_shards: ${{ inputs.distributed_shards }}
@@ -93,7 +93,7 @@ jobs:
     uses: ./.github/workflows/_torch-npu-upstream-test-dist.yml
     with:
       python_version: ${{ inputs.python_version }}
-      prepared_test_src_artifact: pytorch-test-src-${{ inputs.pytorch_version }}-patched
+      prepared_test_src_artifact: pytorch-test-src
       torch_npu_wheel_artifact: torch-npu-wheel-${{ inputs.pytorch_version }}-source
       docker_image: ${{ inputs.docker_image_test }}
       distributed_matrix: ${{ needs.collect_cases.outputs.distributed_matrix }}
@@ -111,7 +111,7 @@ jobs:
     uses: ./.github/workflows/_torch-npu-upstream-test-regular.yml
     with:
       python_version: ${{ inputs.python_version }}
-      prepared_test_src_artifact: pytorch-test-src-${{ inputs.pytorch_version }}-patched
+      prepared_test_src_artifact: pytorch-test-src
       torch_npu_wheel_artifact: torch-npu-wheel-${{ inputs.pytorch_version }}-source
       docker_image: ${{ inputs.docker_image_test }}
       regular_matrix: ${{ needs.collect_cases.outputs.regular_matrix }}
@@ -128,7 +128,7 @@ jobs:
     uses: ./.github/workflows/_torch-npu-upstream-test-custom.yml
     with:
       python_version: ${{ inputs.python_version }}
-      prepared_test_src_artifact: pytorch-test-src-${{ inputs.pytorch_version }}-patched
+      prepared_test_src_artifact: pytorch-test-src
       torch_npu_wheel_artifact: torch-npu-wheel-${{ inputs.pytorch_version }}-source
       docker_image: ${{ inputs.docker_image_test }}
       test_files: ${{ inputs.test_files }}

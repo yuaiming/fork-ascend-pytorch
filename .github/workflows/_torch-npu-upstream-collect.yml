@@ -74,6 +74,23 @@ jobs:
           prepared_test_src_artifact: ${{ inputs.prepared_test_src_artifact }}
           patch_log_suffix: collect
 
+      - name: Install openpyxl
+        run: |
+          pip${{ inputs.python_version }} install openpyxl
+
+      - name: Update whitelist from Excel
+        run: |
+          TRACKER="ascend_pytorch/.github/scripts/Test Class Refactoring Tracker.xlsx"
+          YAML="pytorch-test-src/test_upstream/case_paths_ci.yml"
+          if [ -f "${TRACKER}" ]; then
+            echo "Updating whitelist from Excel: ${TRACKER}"
+            python ascend_pytorch/.github/scripts/excel_utils.py update-yaml \
+              --excel "${TRACKER}" \
+              --yaml "${YAML}"
+          else
+            echo "Excel not found: ${TRACKER}, using existing ${YAML} as-is"
+          fi
+
       - name: Collect all test cases and shard
         id: collect_and_shard
         run: |

@@ -9,48 +9,34 @@ on:
         description: Name of the artifact for prepared test source
     outputs:
       patch_count:
-        description: Number of patches applied
+        description: Number of patches applied (always 0 - no patches needed)
         value: ${{ jobs.prepare.outputs.patch_count }}
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     outputs:
-      patch_count: ${{ steps.apply_patches.outputs.patch_count }}
+      patch_count: ${{ steps.copy_test_upstream.outputs.patch_count }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name == 'master' && 'v2.7.1' || github.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 1
 
-      - name: Clone PyTorch v2.7.1 (for test source)
+      - name: Clone PyTorch upstream (fixed commit)
         run: |
-          git clone --depth=1 --branch v2.7.1 \
+          git clone --depth=1 \
             https://github.com/pytorch/pytorch.git pytorch-test-src
+          cd pytorch-test-src
+          git fetch --depth=1 origin fad74248e78716152917a729adb2b44ba2bab16e
+          git checkout fad74248e78716152917a729adb2b44ba2bab16e
 
-      - name: Copy test_upstream patches
+      - name: Copy test_upstream configs
+        id: copy_test_upstream
         run: |
           cp -r test_upstream pytorch-test-src/
-
-      - name: Apply NPU patches
-        id: apply_patches
-        run: |
-          cd pytorch-test-src/test_upstream
-          chmod +x apply_test_patch.sh
-          # Count patch files before applying
-          PATCH_COUNT=$(find . -name "*.patch" -o -name "*.diff" | wc -l)
-          echo "Found ${PATCH_COUNT} patch files"
-          ./apply_test_patch.sh 2>&1 | tee /tmp/patch.log
-          APPLY_STATUS=${PIPESTATUS[0]}
-          # Use patch file count as the metric (more reliable than grep Chinese output)
-          echo "patch_count=${PATCH_COUNT}" >> $GITHUB_OUTPUT
-          echo "apply_status=${APPLY_STATUS}" >> $GITHUB_OUTPUT
-          # Fail if apply_test_patch.sh returned non-zero
-          if [ ${APPLY_STATUS} -ne 0 ]; then
-            echo "Patch application failed!"
-            exit 1
-          fi
+          echo "patch_count=0" >> $GITHUB_OUTPUT
 
       - name: Package prepared test source
         run: |
@@ -61,15 +47,6 @@ jobs:
         with:
           name: ${{ inputs.prepared_test_src_artifact }}
           path: pytorch-test-src.tar.gz
-          retention-days: 60
-
-      - name: Upload prepare logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: prepare-logs
-          path: /tmp/patch.log
-          if-no-files-found: warn
           retention-days: 60
 
       - name: Package ascend_pytorch github scripts
